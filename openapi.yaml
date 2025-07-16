@@ -1,0 +1,277 @@
+openapi: 3.0.4
+info:
+  title: Routed Admin API
+  description: API documentation for the Routed admin system. Admins can manage routes, assign them to drivers, monitor driver tracking, receive violation alerts, and manage their profile.
+  version: 1.0.0
+
+servers:
+  - url: https://api.routed.example.com
+
+paths:
+  /routes:
+    get:
+      summary: Get all routes
+      tags: [Routes Management]
+      responses:
+        '200':
+          description: List of all routes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Route'
+    post:
+      summary: Create a new route
+      tags: [Routes Management]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Route'
+      responses:
+        '201':
+          description: Route created
+
+  /routes/{id}:
+    get:
+      summary: Get route by ID
+      tags: [Routes Management]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Route details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Route'
+    put:
+      summary: Update a route
+      tags: [Routes Management]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Route'
+      responses:
+        '200':
+          description: Route updated
+    delete:
+      summary: Delete a route
+      tags: [Routes Management]
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Route deleted
+
+  /assignments:
+    post:
+      summary: Assign a route to a driver
+      tags: [Assign Route]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Assignment'
+      responses:
+        '200':
+          description: Assignment successful
+
+  /drivers:
+    get:
+      summary: List all drivers
+      tags: [Driver List]
+      responses:
+        '200':
+          description: Driver list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Driver'
+    post:
+      summary: Add a new driver
+      tags: [Driver List]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Driver'
+      responses:
+        '201':
+          description: Driver created
+    put:
+      summary: Update an existing driver
+      tags: [Driver List]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Driver'
+      responses:
+        '200':
+          description: Driver updated
+    delete:
+      summary: Delete a driver
+      tags: [Driver List]
+      parameters:
+        - in: query
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Driver deleted
+
+  /tracking:
+    get:
+      summary: Get driver locations
+      tags: [Driver Tracking]
+      responses:
+        '200':
+          description: List of driver positions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tracking'
+
+  /violations:
+    get:
+      summary: Get violation alerts
+      tags: [Violation Alerts]
+      responses:
+        '200':
+          description: List of violations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Violation'
+
+  /admin/profile:
+    get:
+      summary: Get admin profile
+      tags: [Profile Setting]
+      responses:
+        '200':
+          description: Admin profile details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminProfile'
+    put:
+      summary: Update admin profile
+      tags: [Profile Setting]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AdminProfile'
+      responses:
+        '200':
+          description: Profile updated
+
+components:
+  schemas:
+    Route:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        points:
+          type: array
+          items:
+            type: object
+            properties:
+              lat:
+                type: number
+              lng:
+                type: number
+
+    Assignment:
+      type: object
+      properties:
+        driverId:
+          type: string
+        routeId:
+          type: string
+
+    Driver:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+          enum: [active, offline, on-route]
+
+    Tracking:
+      type: object
+      properties:
+        driverId:
+          type: string
+        location:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        timestamp:
+          type: string
+          format: date-time
+
+    Violation:
+      type: object
+      properties:
+        id:
+          type: string
+        driverId:
+          type: string
+        routeId:
+          type: string
+        message:
+          type: string
+        time:
+          type: string
+          format: date-time
+
+    AdminProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
