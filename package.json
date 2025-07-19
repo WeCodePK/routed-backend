@@ -1,0 +1,24 @@
+{
+  "name": "routed-backend",
+  "version": "1.0.0",
+  "description": "Express.js backend for routed",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/WeCodePK/routed-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/WeCodePK/routed-backend/issues"
+  },
+  "homepage": "https://github.com/WeCodePK/routed-backend#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "morgan": "^1.10.1"
+  }
+}
