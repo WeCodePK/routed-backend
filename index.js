@@ -88,7 +88,9 @@ const authMiddleware = (req, res, next) => {
         req.admin = decoded; 
         next(); 
     } catch (error) {
-        
+        if (error.name === 'TokenExpiredError') {
+            return res.status(401).json({ message: 'Access Denied: Token has expired.' });
+        }
         console.error('JWT verification failed:', error.message);
         return res.status(403).json({ message: 'Access Denied: Invalid or expired token.' });
     }
