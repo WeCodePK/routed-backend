@@ -1,22 +1,23 @@
-// index.js
+require('dotenv').config(); 
 
 const express = require('express');
 const mysql = require('mysql2/promise');
+const jwt = require('jsonwebtoken'); 
+const bcrypt = require('bcrypt'); 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000; 
 
-// --- MySQL Connection Pool Setup ---
+
 const dbPool = mysql.createPool({
-    host: 'localhost', // Your MySQL host
-    user: 'root', // Your MySQL username
-    password: '777@Ashir', // Your MySQL password
-    database: 'routed_admin_db', // The database name you'll use
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
     waitForConnections: true,
     connectionLimit: 10,
     queueLimit: 0
 });
 
-// Test the database connection
 dbPool.getConnection()
     .then(connection => {
         console.log('Successfully connected to MySQL database!');
@@ -24,23 +25,76 @@ dbPool.getConnection()
     })
     .catch(err => {
         console.error('Error connecting to MySQL database:', err);
-        process.exit(1); // Exit if DB connection fails, as it's critical
+        process.exit(1);
     });
 
-// Make dbPool globally available to request handlers via app.locals
 app.locals.dbPool = dbPool;
 
-// Middleware to parse JSON bodies
 app.use(express.json());
 
-// Basic route for the root URL
 app.get('/', (req, res) => {
     res.send('Welcome to the Routed Admin API Backend!');
 });
 
-// --- API Routes Definition ---
-// Import controller/router modules
-const routesRouter = require('./controllers/routesController'); // routesController will now export a router
+app.post('/admin/login', async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json({ message: 'Email and password are required.' });
+    }
+
+    try {
+        const sql = 'SELECT id, email, password_hash FROM admin_profiles WHERE email = ?';
+        const [rows] = await dbPool.execute(sql, [email]);
+
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        const admin = rows[0];
+        const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        const token = jwt.sign(
+            { id: admin.id, email: admin.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' } 
+        );
+
+        res.status(200).json({ message: 'Login successful', token });
+
+    } catch (error) {
+        console.error('Error during admin login:', error);
+        res.status(500).json({ message: 'Server error during login', error: error.message });
+    }
+});
+
+const authMiddleware = (req, res, next) => {
+    
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1]; 
+
+    if (!token) {
+        
+        return res.status(401).json({ message: 'Access Denied: No token provided.' });
+    }
+
+    try {
+        
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        req.admin = decoded; 
+        next(); 
+    } catch (error) {
+        
+        console.error('JWT verification failed:', error.message);
+        return res.status(403).json({ message: 'Access Denied: Invalid or expired token.' });
+    }
+};
+
+const routesRouter = require('./controllers/routesController');
 const assignmentsRouter = require('./controllers/assignmentsController');
 const driversRouter = require('./controllers/driversController');
 const trackingRouter = require('./controllers/trackingController');
@@ -48,18 +102,14 @@ const violationsRouter = require('./controllers/violationsController');
 const profileRouter = require('./controllers/profileController');
 
 
-// Use the routers for specific base paths
-app.use('/routes', routesRouter);
-app.use('/assignments', assignmentsRouter);
-app.use('/drivers', driversRouter);
-app.use('/tracking', trackingRouter);
-app.use('/violations', violationsRouter);
-app.use('/admin/profile', profileRouter); // Note: /admin/profile is a direct path
-
-// --- End API Routes Definition ---
+app.use('/routes', authMiddleware, routesRouter);
+app.use('/assignments', authMiddleware, assignmentsRouter);
+app.use('/drivers', authMiddleware, driversRouter);
+app.use('/tracking', authMiddleware, trackingRouter);
+app.use('/violations', authMiddleware, violationsRouter);
+app.use('/admin/profile', authMiddleware, profileRouter);
 
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
     console.log('Press CTRL+C to stop the server');

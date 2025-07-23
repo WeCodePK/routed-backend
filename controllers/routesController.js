@@ -1,9 +1,6 @@
-// controllers/routesController.js
-
 const express = require('express');
-const router = express.Router(); // Create a new router instance for this controller
+const router = express.Router();
 
-// Helper function to execute a query (remains the same)
 async function executeQuery(req, sql, params = []) {
     const dbPool = req.app.locals.dbPool;
     let connection;
@@ -16,39 +13,54 @@ async function executeQuery(req, sql, params = []) {
     }
 }
 
-// Define the routes for /routes path using anonymous functions
-
-// GET /routes
 router.get('/', async (req, res) => {
     try {
-        const sql = 'SELECT * FROM routes';
+        const sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
         const result = await executeQuery(req, sql);
-        res.status(200).json(result);
+        const routes = result.map(route => ({
+            ...route,
+            points: JSON.parse(route.points)
+        }));
+        res.status(200).json(routes);
     } catch (error) {
         console.error('Error getting all routes:', error);
         res.status(500).json({ message: 'Error retrieving routes', error: error.message });
     }
 });
 
-// POST /routes
-router.post('/', async (req, res) => {
-    const { name, points } = req.body;
-    if (!name || !points) {
-        return res.status(400).json({ message: 'Name and points are required.' });
+router.post('/saveRoutes', async (req, res) => {
+    const { name, description, totalDistance, points } = req.body;
+    if (!name || !description || !totalDistance || !points) {
+        return res.status(400).json({ message: 'Name, description, totalDistance, and points are required.' });
     }
 
     try {
-        const sql = 'INSERT INTO routes (name, points) VALUES (?, ?)';
-        const params = [name, JSON.stringify(points)];
+        const sql = 'INSERT INTO routes (name, description, totalDistance, points, createdAt) VALUES (?, ?, ?, ?, NOW())';
+        const params = [name, description, totalDistance, JSON.stringify(points)];
         const result = await executeQuery(req, sql, params);
-        res.status(201).json({ id: result.insertId, name, points });
+        res.status(201).json({ message: "Route saved", route: { id: result.insertId, name, description, totalDistance, points } });
     } catch (error) {
-        console.error('Error creating route:', error);
-        res.status(500).json({ message: 'Error creating route', error: error.message });
+        console.error('Error saving route:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
-// GET /routes/:id
+router.get("/getRoutes", async(req, res) => {
+  try {
+    const sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
+    const routes = await executeQuery(req, sql);
+    
+    const parsedRoutes = routes.map(route => ({
+        ...route,
+        points: JSON.parse(route.points)
+    }));
+    res.status(200).json({ message: "Routes get successfully", route: parsedRoutes });
+  } catch (error) {
+        console.error('Error getting routes:', error);
+        res.status(500).json({ error: error.message });
+  }
+});
+
 router.get('/:id', async (req, res) => {
     const routeId = req.params.id;
     try {
@@ -68,14 +80,9 @@ router.get('/:id', async (req, res) => {
     }
 });
 
-// PUT /routes/:id
 router.put('/:id', async (req, res) => {
     const routeId = req.params.id;
-    const { name, points } = req.body;
-
-    if (!name && !points) {
-        return res.status(400).json({ message: 'At least one field (name or points) is required for update.' });
-    }
+    const { name, description, totalDistance, points } = req.body;
 
     let sql = 'UPDATE routes SET ';
     const params = [];
@@ -84,6 +91,14 @@ router.put('/:id', async (req, res) => {
     if (name) {
         fieldsToUpdate.push('name = ?');
         params.push(name);
+    }
+    if (description) {
+        fieldsToUpdate.push('description = ?');
+        params.push(description);
+    }
+    if (totalDistance) {
+        fieldsToUpdate.push('totalDistance = ?');
+        params.push(totalDistance);
     }
     if (points) {
         fieldsToUpdate.push('points = ?');
@@ -109,8 +124,7 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// DELETE /routes/:id
-router.delete('/:id', async (req, res) => {
+router.delete('/deleteRoute/:id', async (req, res) => {
     const routeId = req.params.id;
     try {
         const sql = 'DELETE FROM routes WHERE id = ?';
@@ -127,4 +141,4 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-module.exports = router; // Export the router instance
+module.exports = router;
