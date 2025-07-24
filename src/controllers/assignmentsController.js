@@ -1,17 +1,6 @@
 const express = require('express');
 const router = express.Router();
 
-async function executeQuery(req, sql, params = []) {
-    const dbPool = req.app.locals.dbPool;
-    let connection;
-    try {
-        connection = await dbPool.getConnection();
-        const [rows, fields] = await connection.execute(sql, params);
-        return rows;
-    } finally {
-        if (connection) connection.release();
-    }
-}
 
 router.post('/assignRoutes', async (req, res) => {
     const { driverId, routeIds } = req.body;
