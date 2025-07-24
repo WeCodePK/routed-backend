@@ -1,17 +1,122 @@
+
 openapi: 3.0.4
+
 info:
-  title: Routed Admin API
-  description: API documentation for the Routed admin system. Admins can manage routes, assign them to drivers, monitor driver tracking, receive violation alerts, and manage their profile.
-  version: 1.0.0
+  version: "v0"
+  title: Routed API
 
 servers:
-  - url: https://api.routed.example.com
+  - url: https://routed-backend.wckd.pk/api/v0
 
 paths:
+  /auth/admin/login:
+    post:
+      tags: [Auth]
+      summary: Login and return a JWT.
+      requestBody:
+        required: true
+        content:
+          'application/json':
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+              required:
+                - email
+                - password
+ 
+      responses:
+        200:
+          description: Logged in successfully.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      jwt:
+                        type: string
+              example:
+                success: true
+                message: Logged in successfully.
+                data:
+                  jwt: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFsaTEyMyIsIn ...
+
+        400:
+          description: Missing or malformed input.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: false
+                message: Username or password is missing.
+
+        401:
+          description: Invalid username or password
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+              example:
+                success: false
+                message: "Invalid username or password."
+
+                      
+  
+  /auth/admin/forgot:
+    post:
+      tags: [Auth]
+      summary: Initiate a forgot password request.
+      requestBody:
+        required: true
+        content:
+          'application/json':
+              schema:
+                type: object
+                properties:
+                  email:
+                    type: string
+                required:
+                  - email
+      responses:
+        '200':
+          description: If the user exists, a password reset email has been sent out.
+  
+  /auth/admin/reset/{token}:
+    post:
+      tags: [Auth]
+      summary: Reset the admins password using a reset token.
+
+  /auth/admin/change:
+    post:
+      tags: [Auth]
+
+
+
   /routes:
     get:
-      summary: Get all routes
-      tags: [Routes Management]
+      tags: [Routes]
+      summary: Get all routes (scoped).
       responses:
         '200':
           description: List of all routes
@@ -22,8 +127,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/Route'
     post:
-      summary: Create a new route
-      tags: [Routes Management]
+      tags: [Routes]
+      summary: Create a new route (admins only).
       requestBody:
         required: true
         content:
@@ -34,10 +139,10 @@ paths:
         '201':
           description: Route created
 
-  /routes/{id}:
+  /routes/{uuid}:
     get:
-      summary: Get route by ID
-      tags: [Routes Management]
+      summary: Get route by ID (scoped).
+      tags: [Routes]
       parameters:
         - in: path
           name: id
@@ -53,7 +158,7 @@ paths:
                 $ref: '#/components/schemas/Route'
     put:
       summary: Update a route
-      tags: [Routes Management]
+      tags: [Routes]
       parameters:
         - in: path
           name: id
@@ -68,9 +173,10 @@ paths:
       responses:
         '200':
           description: Route updated
+
     delete:
       summary: Delete a route
-      tags: [Routes Management]
+      tags: [Routes]
       parameters:
         - in: path
           name: id
