@@ -16,7 +16,7 @@ async function initializeDatabase() {
         const connection = await dbPool.getConnection();
         console.log('Successfully connected to MySQL database!');
 
-        const schemaSQL = fs.readFileSync('../schema.sql', 'utf8');
+        const schemaSQL = fs.readFileSync('/app/schema.sql', 'utf8');
 
         // Split by semicolon to support multiple statements
         const queries = schemaSQL
