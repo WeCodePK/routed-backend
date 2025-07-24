@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
 
 const dbPool = mysql.createPool({
@@ -10,12 +12,32 @@ const dbPool = mysql.createPool({
     queueLimit: 0
 });
 
-dbPool.getConnection().then(connection => {
-    console.log('Successfully connected to MySQL database!');
-    connection.release();
-}).catch(error => {
-    console.error('Error connecting to MySQL database:', error);
-    process.exit(1);
-});
+async function initializeDatabase() {
+    try {
+        const connection = await dbPool.getConnection();
+        console.log('Successfully connected to MySQL database!');
+
+        const schemaPath = path.join(__dirname, 'schema.sql');
+        const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+
+        // Split by semicolon to support multiple statements
+        const queries = schemaSQL
+            .split(/;\s*$/m)
+            .map(query => query.trim())
+            .filter(query => query.length);
+
+        for (const query of queries) {
+            await connection.query(query);
+        }
+
+        console.log('Database schema initialized.');
+        connection.release();
+    } catch (error) {
+        console.error('Error initializing database:', error);
+        process.exit(1);
+    }
+}
+
+initializeDatabase();
 
 module.exports = dbPool;
