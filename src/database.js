@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const mysql = require('mysql2/promise');
 
 const dbPool = mysql.createPool({
@@ -17,8 +16,7 @@ async function initializeDatabase() {
         const connection = await dbPool.getConnection();
         console.log('Successfully connected to MySQL database!');
 
-        const schemaPath = path.join(__dirname, 'schema.sql');
-        const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
+        const schemaSQL = fs.readFileSync('../schema.sql', 'utf8');
 
         // Split by semicolon to support multiple statements
         const queries = schemaSQL
