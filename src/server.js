@@ -2,10 +2,15 @@ const express = require('express');
 const dbPool = require('./database');
 const { authMiddleware } = require('./util');
 const cors = require('cors');
+const morgan = require('morgan');
 
 const app = express();
+
+app.use(morgan('dev'));
 app.use(express.json());
+
 app.locals.dbPool = dbPool;
+
 app.use(cors({
     origin: 'https://routed-web.wckd.pk',
     methods: ['Get', 'Post', 'Put', 'Delete'],
