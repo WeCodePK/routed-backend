@@ -1,10 +1,18 @@
 const express = require('express');
 const dbPool = require('./database');
 const { authMiddleware } = require('./util');
+const cors = require('cors');
 
 const app = express();
 app.use(express.json());
 app.locals.dbPool = dbPool;
+app.use(cors({
+    origin: 'https://routed-web.wckd.pk',
+    methods: ['Get', 'Post', 'Put', 'Delete'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+    optionsSuccessStatus: 200,
+}))
 
 app.get('/', (req, res) => {
     res.sendStatus(200);
