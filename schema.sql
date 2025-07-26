@@ -89,3 +89,7 @@ CREATE TABLE IF NOT EXISTS `driver_otps` (
     UNIQUE KEY `driverId` (`driverId`),
     FOREIGN KEY (`driverId`) REFERENCES `drivers`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+
+INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
+('Admin User', 'admin@example.com', '$2b$10$wTczsOSRSlilNwfTR6jf7Oc..sdtOl0RTKJK7aFQ6U30O2/zw5wfy');
