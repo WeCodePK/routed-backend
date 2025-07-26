@@ -93,3 +93,6 @@ CREATE TABLE IF NOT EXISTS `driver_otps` (
 
 INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
 ('Admin User', 'admin@example.com', 'hello');
+
+INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
+('Admin User2', 'admin2@example.com', 'hello');
