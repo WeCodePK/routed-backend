@@ -23,13 +23,13 @@ app.get('/', (req, res) => {
     res.sendStatus(200);
 });
 
-app.use('/auth', require('./controllers/authController'));
-app.use('/routes', authMiddleware, require('./controllers/routesController'));
-app.use('/drivers', authMiddleware, require('./controllers/driversController'));
-app.use('/tracking', authMiddleware, require('./controllers/trackingController'));
-app.use('/violations', authMiddleware, require('./controllers/violationsController'));
-app.use('/admin/profile', authMiddleware, require('./controllers/profileController'));
-app.use('/assignments', authMiddleware, require('./controllers/assignmentsController'));
+app.use('/api/v0/auth', require('./controllers/authController'));
+app.use('/api/v0/routes', authMiddleware, require('./controllers/routesController'));
+app.use('/api/v0/drivers', authMiddleware, require('./controllers/driversController'));
+app.use('/api/v0/tracking', authMiddleware, require('./controllers/trackingController'));
+app.use('/api/v0/violations', authMiddleware, require('./controllers/violationsController'));
+app.use('/api/v0/admin/profile', authMiddleware, require('./controllers/profileController'));
+app.use('/api/v0/assignments', authMiddleware, require('./controllers/assignmentsController'));
 
 app.listen(80, () => {
     console.log(`Server is running`);
