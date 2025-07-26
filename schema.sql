@@ -96,3 +96,6 @@ INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
 
 INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
 ('Admin User2', 'admin2@example.com', 'hello');
+
+INSERT IGNORE INTO `admin_profiles` (`name`, `email`, `password_hash`) VALUES
+('Admin User3', 'admin3@example.com', ' $2b$10$rZTMwJwobMP2S2pwf8oEWu6WhVNCZFQa5fNXMthHAfRdxUaqQ9Wf6');
