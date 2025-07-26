@@ -24,7 +24,7 @@ router.post('/admin/login', async (req, res) => {
         const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: 'Invalid Password' });
+            return res.status(401).json({ success: false, message: admin.password_hash });
         }
 
         const token = jwt.sign(
