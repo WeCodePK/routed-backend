@@ -17,14 +17,14 @@ router.post('/admin/login', async (req, res) => {
         const rows = await executeQuery(req, sql, [email]); 
 
         if (rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+            return res.status(401).json({ success: false, message: 'no record found' });
         }
 
         const admin = rows[0];
         const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
 
         if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: 'Invalid credentials.' });
+            return res.status(401).json({ success: false, message: 'Invalid Password' });
         }
 
         const token = jwt.sign(
