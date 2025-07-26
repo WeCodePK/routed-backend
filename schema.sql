@@ -68,3 +68,24 @@ CREATE TABLE IF NOT EXISTS `violations` (
   KEY `driverId` (`driverId`),
   CONSTRAINT `violations_ibfk_1` FOREIGN KEY (`driverId`) REFERENCES `drivers` (`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `password_reset_tokens` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `userId` INT NOT NULL,
+    `token` VARCHAR(255) NOT NULL UNIQUE,
+    `expiresAt` DATETIME NOT NULL,
+    `createdAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    FOREIGN KEY (`userId`) REFERENCES `admin_profiles`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE IF NOT EXISTS `driver_otps` (
+    `id` INT NOT NULL AUTO_INCREMENT,
+    `driverId` INT NOT NULL,
+    `otp` VARCHAR(6) NOT NULL,
+    `expiresAt` DATETIME NOT NULL,
+    `createdAt` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `driverId` (`driverId`),
+    FOREIGN KEY (`driverId`) REFERENCES `drivers`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
