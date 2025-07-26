@@ -24,6 +24,7 @@ router.post('/admin/login', async (req, res) => {
 
         
         if (password !== admin.password_hash) {
+            console.log(admin.password_hash);
             return res.status(401).json({ success: false, message: 'Invalid credentials.' });
         }
 
