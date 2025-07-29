@@ -6,6 +6,7 @@ const { resp, query } = require('../functions');
 router.get('/', async (req, res) => {
     try {
         const result = await query(req, 'SELECT * FROM routes ORDER BY createdAt DESC');
+        console.log(result);
 
         return resp(res, 200, '', {
             routes: result.map(route => ({
