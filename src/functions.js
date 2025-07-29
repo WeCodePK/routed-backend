@@ -33,9 +33,7 @@ module.exports = {
     },
 
     passwdReqs(newPass) {
-        return newPass === 'string'
-        && newPass.length >= 12
-        && newPass.length <= 64
+        return newPass.length >= 12 && newPass.length <= 64
     },
 
 };
