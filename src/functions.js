@@ -20,7 +20,7 @@ module.exports = {
         const authHeader = req.get('Authorization');
         const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
-        if (!token) return this.resp(res, 401, 'Invalid or expired auth token');
+        if (!token) return module.exports.resp(res, 401, 'Invalid or expired auth token');
 
         try {
             req.user = jwt.verify(token, process.env.JWT_SECRET);
@@ -28,7 +28,7 @@ module.exports = {
         }
 
         catch (error) {
-            return this.resp(res, 401, 'Invalid or expired auth token');
+            return module.exports.resp(res, 401, 'Invalid or expired auth token');
         }
     },
 
