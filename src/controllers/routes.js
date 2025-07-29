@@ -36,38 +36,17 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.get("/getRoutes", async(req, res) => {
-  try {
-    const sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
-    const routes = await query(req, sql);
-    
-    const parsedRoutes = routes.map(route => ({
-        ...route,
-        points: JSON.parse(route.points)
-    }));
-    res.status(200).json({ message: "Routes get successfully", route: parsedRoutes });
-  } catch (error) {
-        console.error('Error getting routes:', error);
-        res.status(500).json({ error: error.message });
-  }
-});
-
 router.get('/:id', async (req, res) => {
-    const routeId = req.params.id;
     try {
-        const sql = 'SELECT * FROM routes WHERE id = ?';
-        const params = [routeId];
-        const result = await query(req, sql, params);
+        const rows = await query(req, 'SELECT * FROM routes WHERE id = ?', [req.params.id]);
 
-        if (result.length === 0) {
-            return res.status(404).json({ message: 'Route not found.' });
-        }
-        const route = result[0];
-        route.points = JSON.parse(route.points);
-        res.status(200).json(route);
-    } catch (error) {
+        if (!rows.length) return resp(res, 404, 'No such route');
+        return resp(res, 200, 'Successfully fetched route', { route: rows[0] });
+    }
+
+    catch (error) {
         console.error('Error getting route by ID:', error);
-        res.status(500).json({ message: 'Error retrieving route', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
