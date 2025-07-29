@@ -15,9 +15,9 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api/v0/auth', require('./controllers/auth'));
-app.use('/api/v0/routes', auth, require('./controllers/routes'));
-app.use('/api/v0/drivers', auth, require('./controllers/drivers'));
-app.use('/api/v0/assignments', auth, require('./controllers/assignments'));
+app.use('/api/v0/routes', auth(), require('./controllers/routes'));
+app.use('/api/v0/drivers', auth(), require('./controllers/drivers'));
+app.use('/api/v0/assignments', auth(), require('./controllers/assignments'));
 
 app.listen(3000, () => {
     console.log(`[INFO] Server is running`);

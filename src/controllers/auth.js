@@ -57,7 +57,7 @@ router.post('/admin/forgot', async (req, res) => {
     }
 });
 
-router.post('/admin/change', auth, async (req, res) => {
+router.post('/admin/change', auth(), async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
     if (!oldPassword || !newPassword) return resp(res, 400, "Missing or malformed input");
@@ -83,7 +83,7 @@ router.post('/admin/change', auth, async (req, res) => {
     }
 });
 
-router.post('/admin/reset', auth, async (req, res) => {
+router.post('/admin/reset', auth({ type: 'resetToken' }), async (req, res) => {
     const { newPassword } = req.body;
 
     if (!newPassword) return resp(res, 400, "Missing or malformed input");
