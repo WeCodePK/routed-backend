@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS `routes` (
 	`points`		JSON			NOT NULL,
 	`description`	TEXT			NOT NULL,
 	`totalDistance`	DECIMAL(10,2)	NOT NULL,
+	`createdAt`		DATETIME		NOT NULL	DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY (`id`)
 );
 

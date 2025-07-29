@@ -1,54 +1,50 @@
 const express = require('express');
 const router = express.Router();
 
-async function executeQuery(req, sql, params = []) {
-    const dbPool = req.app.locals.dbPool;
-    let connection;
-    try {
-        connection = await dbPool.getConnection();
-        const [rows, fields] = await connection.execute(sql, params);
-        return rows;
-    } finally {
-        if (connection) connection.release();
-    }
-}
+const { resp, query } = require('../functions');
 
 router.get('/', async (req, res) => {
     try {
-        const sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
-        const result = await executeQuery(req, sql);
-        const routes = result.map(route => ({
-            ...route,
-            points: JSON.parse(route.points)
-        }));
-        res.status(200).json(routes);
-    } catch (error) {
+        const result = await query(req, 'SELECT * FROM routes ORDER BY createdAt DESC');
+
+        return resp(res, 200, '', {
+            routes: result.map(route => ({
+                ...route,
+                points: JSON.parse(route.points)
+            }))
+        });
+    }
+
+    catch (error) {
         console.error('Error getting all routes:', error);
-        res.status(500).json({ message: 'Error retrieving routes', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
-router.post('/saveRoutes', async (req, res) => {
-    const { name, description, totalDistance, points } = req.body;
-    if (!name || !description || !totalDistance || !points) {
-        return res.status(400).json({ message: 'Name, description, totalDistance, and points are required.' });
-    }
+router.post('/', async (req, res) => {
+    const { name, description, totalDistance, points, createdAt } = req.body;
+
+    if (!name || !description || !totalDistance || !points || !createdAt) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const sql = 'INSERT INTO routes (name, description, totalDistance, points, createdAt) VALUES (?, ?, ?, ?, NOW())';
-        const params = [name, description, totalDistance, JSON.stringify(points)];
-        const result = await executeQuery(req, sql, params);
-        res.status(201).json({ message: "Route saved", route: { id: result.insertId, name, description, totalDistance, points } });
-    } catch (error) {
+        const result = await query(req,
+            'INSERT INTO routes (name, description, totalDistance, points, createdAt) VALUES (?, ?, ?, ?, NOW())',
+            [name, description, totalDistance, JSON.stringify(points)]
+        );
+
+        return resp(res, 200, "Route saved successfully", { route: { id: result.insertId } });
+    }
+
+    catch (error) {
         console.error('Error saving route:', error);
-        res.status(500).json({ error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
 router.get("/getRoutes", async(req, res) => {
   try {
     const sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
-    const routes = await executeQuery(req, sql);
+    const routes = await query(req, sql);
     
     const parsedRoutes = routes.map(route => ({
         ...route,
@@ -66,7 +62,7 @@ router.get('/:id', async (req, res) => {
     try {
         const sql = 'SELECT * FROM routes WHERE id = ?';
         const params = [routeId];
-        const result = await executeQuery(req, sql, params);
+        const result = await query(req, sql, params);
 
         if (result.length === 0) {
             return res.status(404).json({ message: 'Route not found.' });
@@ -113,7 +109,7 @@ router.put('/:id', async (req, res) => {
     params.push(routeId);
 
     try {
-        const result = await executeQuery(req, sql, params);
+        const result = await query(req, sql, params);
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Route not found or no changes made.' });
         }
@@ -129,7 +125,7 @@ router.delete('/deleteRoute/:id', async (req, res) => {
     try {
         const sql = 'DELETE FROM routes WHERE id = ?';
         const params = [routeId];
-        const result = await executeQuery(req, sql, params);
+        const result = await query(req, sql, params);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ message: 'Route not found.' });
