@@ -57,7 +57,7 @@ router.put('/:id', async (req, res) => {
 
     try {
         const result = await query(req,
-            'UPDATE routes SET name = ?, description = ?, totalDistance = ? points = ? WHERE id = ?',
+            'UPDATE routes SET name = ?, description = ?, totalDistance = ?, points = ? WHERE id = ?',
             [name, description, totalDistance, points, req.params.id]
         );
 
