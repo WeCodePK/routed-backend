@@ -5,14 +5,8 @@ const { resp, query } = require('../functions');
 
 router.get('/', async (req, res) => {
     try {
-        const result = await query(req, 'SELECT * FROM routes ORDER BY createdAt DESC');
-        console.log(result);
-
-        return resp(res, 200, '', {
-            routes: result.map(route => ({
-                ...route,
-                // points: JSON.parse(route.points)
-            }))
+        return resp(res, 200, 'Successfully fetched all routes.', {
+            routes: await query(req, 'SELECT * FROM routes ORDER BY createdAt DESC')
         });
     }
 
@@ -30,7 +24,7 @@ router.post('/', async (req, res) => {
     try {
         const result = await query(req,
             'INSERT INTO routes (name, description, totalDistance, points, createdAt) VALUES (?, ?, ?, ?, NOW())',
-            [name, description, totalDistance, JSON.stringify(points)]
+            [name, description, totalDistance, points]
         );
 
         return resp(res, 200, "Route saved successfully", { route: { id: result.insertId } });
