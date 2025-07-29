@@ -38,5 +38,5 @@ CREATE TABLE IF NOT EXISTS `assignments` (
 INSERT IGNORE INTO `admins` (`name`, `email`, `hash`) VALUES (
 	'Demo Admin',
 	'demo.admin@example.com',
-	'$2b$10$5C20Ea6Y7UFI0SswX02W9e0RyAwfRKDtWk.6dqrkg1gwfkfHCH0je'
+	'$2a$12$L5J8FmkjVM8FDycN85N6b.6DEwPCiUBLPOmvxIqA6MJ6u9a3rPxRO'
 );
