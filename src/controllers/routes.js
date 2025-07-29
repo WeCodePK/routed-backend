@@ -22,9 +22,9 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { name, description, totalDistance, points, createdAt } = req.body;
+    const { name, description, totalDistance, points } = req.body;
 
-    if (!name || !description || !totalDistance || !points || !createdAt) return resp(res, 400, 'Missing or malformed input');
+    if (!name || !description || !totalDistance || !points) return resp(res, 400, 'Missing or malformed input');
 
     try {
         const result = await query(req,
