@@ -7,7 +7,6 @@ const { auth, resp, query, passwdReqs } = require('../functions');
 
 router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
-
     if (!email || !password) return resp(res, 400, 'Missing or malformed input');
 
     try {
@@ -43,11 +42,10 @@ router.post('/admin/change', auth, async (req, res) => {
             return resp(res, 401, 'Invalid oldPassword');
         }
 
-        const result = await query(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
+        await query(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
             await bcrypt.hash(newPassword, 12), req.user.email
         ]);
 
-        if (result.affectedRows === 0) return resp(res, 500, 'Internal Server error');
         return resp(res, 200, 'Password changed successfully');
     }
 
@@ -59,36 +57,20 @@ router.post('/admin/change', auth, async (req, res) => {
 
 router.post('/admin/forgot', async (req, res) => {
     const { email } = req.body;
-
-    if (!email) {
-        return res.status(400).json({ success: false, message: 'Email is required.' });
-    }
+    if (!email) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const sql = 'SELECT id FROM admin_profiles WHERE email = ?';
-        const rows = await executeQuery(req, sql, [email]);
+        const resetToken = jwt.sign({ email, type: 'resetToken', }, process.env.JWT_SECRET, { expiresIn: '15m' });
+        await executeQuery(req, 'UPDATE admins SET resetToken = ? WHERE email = ?', [resetToken, email]);
 
-        if (rows.length === 0) {
-            return res.status(200).json({ success: true, message: 'If the user exists, a password reset email has been sent out.' });
-        }
+        // TODO: send the actual email.
 
-        const admin = rows[0];
-        const resetToken = jwt.sign(
-            { id: admin.id, type: 'passwordReset' },
-            process.env.JWT_SECRET,
-            { expiresIn: '15m' } 
-        );
+        return resp(res, 200, 'If the user exists, a password reset email has been sent out');
+    }
 
-        const insertTokenSql = 'INSERT INTO password_reset_tokens (userId, token, expiresAt) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 15 MINUTE)) ON DUPLICATE KEY UPDATE token = ?, expiresAt = DATE_ADD(NOW(), INTERVAL 15 MINUTE)';
-        await executeQuery(req, insertTokenSql, [admin.id, resetToken, resetToken]);
-
-        console.log(`Password reset email sent to ${email} with token: ${resetToken}`);
-
-        res.status(200).json({ success: true, message: 'If the user exists, a password reset email has been sent out.' });
-
-    } catch (error) {
+    catch (error) {
         console.error('Error during admin forgot password:', error);
-        res.status(500).json({ success: false, message: 'Server error during forgot password request', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
