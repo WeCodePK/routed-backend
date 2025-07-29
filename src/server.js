@@ -8,7 +8,7 @@ const { auth } = require('./functions');
 
 app.use(cors());
 app.use(express.json());
-app.use(morgan('combined'));
+app.use(morgan('combined', { skip: (req, res) => req.path === '/' }));
 
 app.get('/', (req, res) => {
     res.sendStatus(200);
