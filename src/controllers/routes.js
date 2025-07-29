@@ -94,20 +94,15 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-router.delete('/deleteRoute/:id', async (req, res) => {
-    const routeId = req.params.id;
+router.delete('/:id', async (req, res) => {
     try {
-        const sql = 'DELETE FROM routes WHERE id = ?';
-        const params = [routeId];
-        const result = await query(req, sql, params);
+        await query(req, 'DELETE FROM routes WHERE id = ?', req.params.id);
+        return resp(res, 200, 'Successfully deleted route');
+    }
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Route not found.' });
-        }
-        res.status(200).json({ message: 'Route deleted successfully.' });
-    } catch (error) {
+    catch (error) {
         console.error('Error deleting route:', error);
-        res.status(500).json({ message: 'Error deleting route', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
