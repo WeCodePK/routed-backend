@@ -33,6 +33,8 @@ router.post('/admin/login', async (req, res) => {
 router.post('/admin/change', auth, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
+    console.log("[DEV]", req.user)
+
     if (!oldPassword || !newPassword) return resp(res, 400, "Missing or malformed input");
     if (!passwdReqs(newPassword)) return resp(res, 422, 'newPassword does not meet security requirements');
 
