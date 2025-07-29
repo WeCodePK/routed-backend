@@ -9,9 +9,10 @@ module.exports = {
     },
 
     resp(res, code, message, data = {}) {
-        res.status(code).json({
-            data, message,
-            success: (code >= 200 && code <= 299)
+        return res.status(code).json({
+            success: (code >= 200 && code <= 299),
+            message,
+            data
         })
     },
 
