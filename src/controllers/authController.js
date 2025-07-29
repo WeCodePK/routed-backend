@@ -9,22 +9,20 @@ router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return resp(res, 400, 'Missing or malformed input.');
+        return resp(res, 400, 'Missing or malformed input');
     }
 
     try {
-        const rows = await query(req.db, 'SELECT email, hash FROM admins WHERE email = ?', [email]);
+        const rows = await query(req, 'SELECT email, hash FROM admins WHERE email = ?', [email]);
 
-        if (!rows.length) {
-            return resp(res, 401, 'Invalid email or password specified.');
-        }
-
-        if (!(await bcrypt.compare(password, rows[0].hash))) {
-            return resp(res, 401, 'Invalid email or password specified.');
+        if (!rows.length || !(await bcrypt.compare(password, rows[0].hash))) {
+            return resp(res, 401, 'Invalid email or password specified');
         }
 
         return resp(res, 200, 'Login successful.', {
-            jwt: jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+            jwt: jwt.sign({ 
+                email: admin.email 
+            }, process.env.JWT_SECRET, { expiresIn: '1h' })
         });
     }
 
