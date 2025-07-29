@@ -21,7 +21,7 @@ router.post('/admin/login', async (req, res) => {
 
         return resp(res, 200, 'Login successful.', {
             jwt: jwt.sign({ 
-                email: admin.email 
+                email: rows[0].email 
             }, process.env.JWT_SECRET, { expiresIn: '1h' })
         });
     }
