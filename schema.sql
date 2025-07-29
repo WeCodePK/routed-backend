@@ -1,8 +1,9 @@
 CREATE TABLE IF NOT EXISTS `admins` (
-	`id`	INT				NOT NULL	AUTO_INCREMENT,
-	`name`	VARCHAR(255)	NOT NULL,
-	`email`	VARCHAR(255)	NOT NULL,
-	`hash`	VARCHAR(255)	NOT NULL,
+	`id`			INT				NOT NULL	AUTO_INCREMENT,
+	`name`			VARCHAR(255)	NOT NULL,
+	`email`			VARCHAR(255)	NOT NULL,
+	`hash`			VARCHAR(255)	NOT NULL,
+	`resetToken`	VARCHAR(255),
 	PRIMARY KEY (`id`),
 	UNIQUE KEY `email` (`email`)
 );
