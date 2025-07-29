@@ -33,20 +33,18 @@ router.post('/admin/login', async (req, res) => {
 router.post('/admin/change', auth, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
-    console.log("[DEV]", req.user)
-
     if (!oldPassword || !newPassword) return resp(res, 400, "Missing or malformed input");
     if (!passwdReqs(newPassword)) return resp(res, 422, 'newPassword does not meet security requirements');
 
     try {
-        const rows = await query(req, 'SELECT hash FROM admins WHERE email = ?', [req.user]);
+        const rows = await query(req, 'SELECT hash FROM admins WHERE email = ?', [req.user.email]);
 
         if (!rows.length || !(await bcrypt.compare(oldPassword, rows[0].hash))) {
             return resp(res, 401, 'Invalid oldPassword');
         }
 
         const result = await query(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
-            await bcrypt.hash(newPassword, 12), req.user
+            await bcrypt.hash(newPassword, 12), req.user.email
         ]);
 
         if (result.affectedRows === 0) return resp(res, 500, 'Internal Server error');
