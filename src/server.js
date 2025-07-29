@@ -3,12 +3,12 @@ const morgan = require('morgan');
 const cors = require('cors');
 
 const app = express();
-const { auth } = require('./util');
 app.locals.db = require('./database');
+const { auth } = require('./functions');
 
 app.use(cors());
-app.use(morgan());
 app.use(express.json());
+app.use(morgan('combined'));
 
 app.get('/', (req, res) => {
     res.sendStatus(200);
