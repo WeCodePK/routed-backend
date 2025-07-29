@@ -51,46 +51,23 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    const routeId = req.params.id;
     const { name, description, totalDistance, points } = req.body;
 
-    let sql = 'UPDATE routes SET ';
-    const params = [];
-    const fieldsToUpdate = [];
-
-    if (name) {
-        fieldsToUpdate.push('name = ?');
-        params.push(name);
-    }
-    if (description) {
-        fieldsToUpdate.push('description = ?');
-        params.push(description);
-    }
-    if (totalDistance) {
-        fieldsToUpdate.push('totalDistance = ?');
-        params.push(totalDistance);
-    }
-    if (points) {
-        fieldsToUpdate.push('points = ?');
-        params.push(JSON.stringify(points));
-    }
-
-    if (fieldsToUpdate.length === 0) {
-        return res.status(400).json({ message: 'No fields provided for update.' });
-    }
-
-    sql += fieldsToUpdate.join(', ') + ' WHERE id = ?';
-    params.push(routeId);
+    if (!name || !description || !totalDistance || !points) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const result = await query(req, sql, params);
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ message: 'Route not found or no changes made.' });
-        }
-        res.status(200).json({ message: 'Route updated successfully.' });
-    } catch (error) {
+        const result = await query(req,
+            'UPDATE routes SET name = ?, description = ?, totalDistance = ? points = ? WHERE id = ?',
+            [name, description, totalDistance, points, req.params.id]
+        );
+
+        if (!result.affectedRows) return resp(res, 404, 'No such route');
+        return resp(res, 200, 'Successfully updated route');
+    }
+
+    catch (error) {
         console.error('Error updating route:', error);
-        res.status(500).json({ message: 'Error updating route', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
