@@ -32,4 +32,10 @@ module.exports = {
         }
     },
 
+    passwdReqs(newPass) {
+        return newPass === 'string'
+        && newPass.length >= 12
+        && newPass.length <= 64
+    },
+
 };

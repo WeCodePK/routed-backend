@@ -3,14 +3,12 @@ const router = express.Router();
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { auth, resp, query } = require('../functions');
+const { auth, resp, query, passwdReqs } = require('../functions');
 
 router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
 
-    if (!email || !password) {
-        return resp(res, 400, 'Missing or malformed input');
-    }
+    if (!email || !password) return resp(res, 400, 'Missing or malformed input');
 
     try {
         const rows = await query(req, 'SELECT email, hash FROM admins WHERE email = ?', [email]);
@@ -19,7 +17,7 @@ router.post('/admin/login', async (req, res) => {
             return resp(res, 401, 'Invalid email or password specified');
         }
 
-        return resp(res, 200, 'Login successful.', {
+        return resp(res, 200, 'Login successful', {
             jwt: jwt.sign({ 
                 email: rows[0].email 
             }, process.env.JWT_SECRET, { expiresIn: '1h' })
@@ -32,48 +30,30 @@ router.post('/admin/login', async (req, res) => {
     }
 });
 
-
-router.post('/admin/change', async (req, res) => {
+router.post('/admin/change', auth, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
-    
-    const adminId = req.admin.id; 
 
-    if (!oldPassword || !newPassword) {
-        return res.status(400).json({ success: false, message: 'Old password and new password are required.' });
-    }
-
-    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
-        return res.status(422).json({ success: false, message: 'Password does not meet security requirements. It must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.' });
-    }
+    if (!oldPassword || !newPassword) return resp(res, 400, "Missing or malformed input");
+    if (!passwdReqs(newPassword)) return resp(res, 422, 'newPassword does not meet security requirements');
 
     try {
-        const sql = 'SELECT password_hash FROM admin_profiles WHERE id = ?';
-        const rows = await executeQuery(req, sql, [adminId]);
+        const rows = await query(req, 'SELECT hash FROM admins WHERE email = ?', [req.user]);
 
-        if (rows.length === 0) {
-            return res.status(404).json({ success: false, message: 'Admin not found.' }); 
+        if (!rows.length || !(await bcrypt.compare(oldPassword, rows[0].hash))) {
+            return resp(res, 401, 'Invalid oldPassword');
         }
 
-        const admin = rows[0];
-        const isPasswordValid = await bcrypt.compare(oldPassword, admin.password_hash);
+        const result = await query(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
+            await bcrypt.hash(newPassword, 12), req.user
+        ]);
 
-        if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: 'Invalid old password.' });
-        }
+        if (result.affectedRows === 0) return resp(res, 500, 'Internal Server error');
+        return resp(res, 200, 'Password changed successfully');
+    }
 
-        const newPasswordHash = await bcrypt.hash(newPassword, 10);
-        const updateSql = 'UPDATE admin_profiles SET password_hash = ? WHERE id = ?';
-        const updateResult = await executeQuery(req, updateSql, [newPasswordHash, adminId]);
-
-        if (updateResult.affectedRows === 0) {
-            return res.status(500).json({ success: false, message: 'Failed to update password or no changes made.' });
-        }
-
-        res.status(200).json({ success: true, message: 'Password changed successfully.' });
-
-    } catch (error) {
+    catch (error) {
         console.error('Error changing admin password:', error);
-        res.status(500).json({ success: false, message: 'Server error during password change', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
