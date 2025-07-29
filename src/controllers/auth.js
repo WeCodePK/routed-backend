@@ -90,7 +90,7 @@ router.post('/admin/reset', auth({ type: 'resetToken' }), async (req, res) => {
     if (!passwdReqs(newPassword)) return resp(res, 422, 'newPassword does not meet security requirements');
 
     try {
-        await executeQuery(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
+        await query(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
             await bcrypt.hash(newPassword, 12), req.user.email
         ]);
 
@@ -112,7 +112,7 @@ router.post('/driver/otp', async (req, res) => {
 
     try {
         const sql = 'SELECT id FROM drivers WHERE contact = ?';
-        const rows = await executeQuery(req, sql, [phone]);
+        const rows = await query(req, sql, [phone]);
 
         if (rows.length === 0) {
             return res.status(200).json({ success: true, message: 'If the user exists, an OTP has been sent to their phone number.' });
@@ -123,7 +123,7 @@ router.post('/driver/otp', async (req, res) => {
         const expiresAt = new Date(Date.now() + 5 * 60 * 1000); 
 
         const insertOtpSql = 'INSERT INTO driver_otps (driverId, otp, expiresAt) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, expiresAt = ?';
-        await executeQuery(req, insertOtpSql, [driver.id, otp, expiresAt, otp, expiresAt]);
+        await query(req, insertOtpSql, [driver.id, otp, expiresAt, otp, expiresAt]);
 
         console.log(`OTP for ${phone}: ${otp}`); 
 
@@ -144,7 +144,7 @@ router.post('/driver/login', async (req, res) => {
 
     try {
         const driverSql = 'SELECT id, contact FROM drivers WHERE contact = ?';
-        const driverRows = await executeQuery(req, driverSql, [phone]);
+        const driverRows = await query(req, driverSql, [phone]);
 
         if (driverRows.length === 0) {
             return res.status(401).json({ success: false, message: 'Invalid phone number or OTP.' });
@@ -152,7 +152,7 @@ router.post('/driver/login', async (req, res) => {
         const driver = driverRows[0];
 
         const otpSql = 'SELECT otp, expiresAt FROM driver_otps WHERE driverId = ? AND otp = ?';
-        const otpRows = await executeQuery(req, otpSql, [driver.id, otp]);
+        const otpRows = await query(req, otpSql, [driver.id, otp]);
 
         if (otpRows.length === 0) {
             return res.status(401).json({ success: false, message: 'Invalid phone number or OTP.' });
@@ -162,7 +162,7 @@ router.post('/driver/login', async (req, res) => {
         if (new Date() > new Date(storedOtp.expiresAt)) {
             
             const deleteOtpSql = 'DELETE FROM driver_otps WHERE driverId = ?';
-            await executeQuery(req, deleteOtpSql, [driver.id]);
+            await query(req, deleteOtpSql, [driver.id]);
             return res.status(401).json({ success: false, message: 'OTP has expired.' });
         }
 
@@ -173,7 +173,7 @@ router.post('/driver/login', async (req, res) => {
         );
 
         const deleteOtpSql = 'DELETE FROM driver_otps WHERE driverId = ?';
-        await executeQuery(req, deleteOtpSql, [driver.id]);
+        await query(req, deleteOtpSql, [driver.id]);
 
         res.status(200).json({ success: true, message: 'Login successful', data: { jwt: token } });
 
