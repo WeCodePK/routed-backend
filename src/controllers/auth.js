@@ -29,6 +29,34 @@ router.post('/admin/login', async (req, res) => {
     }
 });
 
+router.post('/admin/forgot', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) return resp(res, 400, 'Missing or malformed input');
+
+    try {
+        const rows = await query(req, 'SELECT email FROM admins WHERE email = ?', [email]);
+
+        if (rows.length) {
+
+            const resetToken = jwt.sign({
+                email, 
+                type: 'resetToken', 
+            }, process.env.JWT_SECRET, { expiresIn: '15m' });
+
+            // TODO: send the actual email
+            console.log(resetToken);
+        }
+
+        return resp(res, 200, 'If the user exists, a password reset email has been sent out');
+    }
+
+    catch (error) {
+        console.error('Error during admin forgot password:', error);
+        return resp(res, 500, 'Internal Server Error');
+    }
+});
+
 router.post('/admin/change', auth, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
 
@@ -55,67 +83,23 @@ router.post('/admin/change', auth, async (req, res) => {
     }
 });
 
-router.post('/admin/forgot', async (req, res) => {
-    const { email } = req.body;
-    if (!email) return resp(res, 400, 'Missing or malformed input');
+router.post('/admin/reset', auth, async (req, res) => {
+    const { newPassword } = req.body;
+
+    if (!newPassword) return resp(res, 400, "Missing or malformed input");
+    if (!passwdReqs(newPassword)) return resp(res, 422, 'newPassword does not meet security requirements');
 
     try {
-        const resetToken = jwt.sign({ email, type: 'resetToken', }, process.env.JWT_SECRET, { expiresIn: '15m' });
-        await query(req, 'UPDATE admins SET resetToken = ? WHERE email = ?', [resetToken, email]);
+        await executeQuery(req, 'UPDATE admins SET hash = ? WHERE email = ?', [
+            await bcrypt.hash(newPassword, 12), req.user.email
+        ]);
 
-        // TODO: send the actual email.
-
-        return resp(res, 200, 'If the user exists, a password reset email has been sent out');
+        return resp(res, 200, 'Password reset successfully');
     }
 
     catch (error) {
-        console.error('Error during admin forgot password:', error);
-        return resp(res, 500, 'Internal Server Error');
-    }
-});
-
-router.post('/admin/reset', async (req, res) => {
-    const { token, newPassword } = req.body;
-
-    if (!token || !newPassword) {
-        return res.status(400).json({ success: false, message: 'Token and new password are required.' });
-    }
-
-    if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
-        return res.status(422).json({ success: false, message: 'Password does not meet security requirements. It must be at least 8 characters long and include uppercase, lowercase, numbers, and special characters.' });
-    }
-
-    try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const adminId = decoded.id;
-
-        const checkTokenSql = 'SELECT * FROM password_reset_tokens WHERE userId = ? AND token = ? AND expiresAt > NOW()';
-        const tokenRows = await executeQuery(req, checkTokenSql, [adminId, token]);
-
-        if (tokenRows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid or expired reset token.' });
-        }
-
-        const newPasswordHash = await bcrypt.hash(newPassword, 10);
-        const updateSql = 'UPDATE admin_profiles SET password_hash = ? WHERE id = ?';
-        const updateResult = await executeQuery(req, updateSql, [newPasswordHash, adminId]);
-
-        const deleteTokenSql = 'DELETE FROM password_reset_tokens WHERE token = ?';
-        await executeQuery(req, deleteTokenSql, [token]);
-
-
-        if (updateResult.affectedRows === 0) {
-            return res.status(500).json({ success: false, message: 'Failed to reset password or no changes made.' });
-        }
-
-        res.status(200).json({ success: true, message: 'Password reset successfully.' });
-
-    } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            return res.status(401).json({ success: false, message: 'Access Denied: Reset token has expired.' });
-        }
         console.error('Error resetting admin password:', error);
-        res.status(500).json({ success: false, message: 'Server error during password reset', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
