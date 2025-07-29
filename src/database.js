@@ -15,7 +15,7 @@ const pool = mysql.createPool({
 async function initializeDatabase() {
   try {
     const connection = await pool.getConnection();
-    console.log('[INFO] Successfully connected to MySQL');
+    console.log('[INFO] Connected to MySQL');
 
     const schemaPath = path.resolve(__dirname, '../schema.sql');
     const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
