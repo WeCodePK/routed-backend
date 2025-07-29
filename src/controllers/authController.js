@@ -3,41 +3,34 @@ const router = express.Router();
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { executeQuery } = require('../util'); 
+const { auth, resp, query } = require('../util');
 
 router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-        return res.status(400).json({ success: false, message: 'Email and password are required.' });
+        return resp(res, 400, 'Missing or malformed input.');
     }
 
     try {
-        const sql = 'SELECT id, email, password_hash FROM admin_profiles WHERE email = ?';
-        const rows = await executeQuery(req, sql, [email]); 
+        const rows = await query(req.db, 'SELECT email, hash FROM admins WHERE email = ?', [email]);
 
-        if (rows.length === 0) {
-            return res.status(401).json({ success: false, message: 'no record found' });
+        if (!rows.length) {
+            return resp(res, 401, 'Invalid email or password specified.');
         }
 
-        const admin = rows[0];
-        const isPasswordValid = await bcrypt.compare(password, admin.password_hash);
-
-        if (!isPasswordValid) {
-            return res.status(401).json({ success: false, message: admin.password_hash });
+        if (!(await bcrypt.compare(password, rows[0].hash))) {
+            return resp(res, 401, 'Invalid email or password specified.');
         }
 
-        const token = jwt.sign(
-            { id: admin.id, email: admin.email },
-            process.env.JWT_SECRET,
-            { expiresIn: '1h' }
-        );
+        return resp(res, 200, 'Login successful.', {
+            jwt: jwt.sign({ email: admin.email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+        });
+    }
 
-        res.status(200).json({ success: true, message: 'Login successful', data: { jwt: token } });
-
-    } catch (error) {
+    catch (error) {
         console.error('Error during admin login:', error);
-        res.status(500).json({ success: false, message: 'Server error during login', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
