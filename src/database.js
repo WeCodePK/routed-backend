@@ -1,41 +1,41 @@
 const fs = require('fs');
+const path = require('path');
 const mysql = require('mysql2/promise');
 
-const dbPool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
+const pool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
 });
 
 async function initializeDatabase() {
-    try {
-        const connection = await dbPool.getConnection();
-        console.log('Successfully connected to MySQL database!');
+  try {
+    const connection = await pool.getConnection();
+    console.log('[INFO] Successfully connected to MySQL');
 
-        const schemaSQL = fs.readFileSync('/app/schema.sql', 'utf8');
+    const schemaPath = path.resolve(__dirname, '../schema.sql');
+    const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
 
-        // Split by semicolon to support multiple statements
-        const queries = schemaSQL
-            .split(/;\s*$/m)
-            .map(query => query.trim())
-            .filter(query => query.length);
+    const queries = schemaSQL
+      .split(/;\s*$/gm)
+      .map(q => q.trim())
+      .filter(Boolean);
 
-        for (const query of queries) {
-            await connection.query(query);
-        }
-
-        console.log('Database schema initialized.');
-        connection.release();
-    } catch (error) {
-        console.error('Error initializing database:', error);
-        process.exit(1);
+    for (const query of queries) {
+      await connection.query(query);
     }
+
+    console.log('[INFO] MySQL schema initialized');
+    connection.release();
+  } catch (err) {
+    console.error('[ERROR] Failed to initialize MySQL schema:', err);
+    process.exit(1);
+  }
 }
 
 initializeDatabase();
-
-module.exports = dbPool;
+module.exports = pool;
