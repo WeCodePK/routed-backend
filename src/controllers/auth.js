@@ -61,7 +61,7 @@ router.post('/admin/forgot', async (req, res) => {
 
     try {
         const resetToken = jwt.sign({ email, type: 'resetToken', }, process.env.JWT_SECRET, { expiresIn: '15m' });
-        await executeQuery(req, 'UPDATE admins SET resetToken = ? WHERE email = ?', [resetToken, email]);
+        await query(req, 'UPDATE admins SET resetToken = ? WHERE email = ?', [resetToken, email]);
 
         // TODO: send the actual email.
 
