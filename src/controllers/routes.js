@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
         return resp(res, 200, '', {
             routes: result.map(route => ({
                 ...route,
-                points: JSON.parse(route.points)
+                // points: JSON.parse(route.points)
             }))
         });
     }
