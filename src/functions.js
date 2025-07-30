@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken')
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 module.exports = {
 
@@ -42,6 +43,22 @@ module.exports = {
                 return module.exports.resp(res, 401, 'Invalid or expired auth token');
             }
         }
+    },
+
+    genSecret(length) {
+        return crypto.randomBytes(Math.ceil(length / 2)).toString('hex').slice(0, length);
+    },
+
+    graceful(app, server) {
+        console.log('[INFO] Shutting down server');
+        server.close(() => {
+            if(app.locals.db) {
+                app.locals.db.closeConnection(() => {
+                    console.log('[INFO] Closed MySQL connection')
+                });
+            }
+            process.exit(0);
+        });
     },
 
 };
