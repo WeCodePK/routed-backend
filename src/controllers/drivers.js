@@ -6,7 +6,7 @@ const { resp, query } = require('../functions');
 router.get('/', async (req, res) => {
     try {
         return resp(res, 200, 'Successfully fetched all drivers', {
-            drivers: await query(req, 'SELECT * FROM drivers;')
+            drivers: await query(req, 'SELECT * FROM drivers ORDER BY id DESC;')
         });
     }
 
