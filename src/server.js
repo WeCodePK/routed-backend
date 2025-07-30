@@ -32,5 +32,5 @@ const server = app.listen(3000, () => {
     console.log(`[INFO] Server is running`);
 });
 
-process.on('SIGINT', graceful(app, server));
-process.on('SIGTERM', graceful(app, server));
+process.on('SIGINT', () => graceful(app, server));
+process.on('SIGTERM', () => graceful(app, server));
