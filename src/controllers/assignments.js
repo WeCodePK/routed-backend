@@ -1,6 +1,18 @@
 const express = require('express');
 const router = express.Router();
 
+router.get('/', async (req, res) => {
+    try {
+        return resp(res, 200, 'Successfully fetched all assignments', {
+            assignments: await query(req, 'SELECT * FROM assignments ORDER BY id DESC;')
+        });
+    }
+
+    catch (error) {
+        console.error('Error getting all assignments:', error);
+        return resp(res, 500, 'Internal Server Error');
+    }
+});
 
 router.post('/assignRoutes', async (req, res) => {
     const { driverId, routeIds } = req.body;
