@@ -26,7 +26,7 @@ app.use((err, req, res, next) => {
         return resp(res, 400, 'Invalid JSON payload')
     }
 
-    throw new err;
+    res.status(500).json(err);
 });
 
 const server = app.listen(3000, () => {
