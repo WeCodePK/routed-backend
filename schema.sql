@@ -8,14 +8,14 @@ CREATE TABLE IF NOT EXISTS `admins` (
 );
 
 CREATE TABLE IF NOT EXISTS `drivers` (
-    `id`    INT             NOT NULL    AUTO_INCREMENT,
-    `name`  VARCHAR(255)    NOT NULL,
-    `phone` VARCHAR(255)    NOT NULL,
-    `isLive` BOOLEAN        NOT NULL    DEFAULT TRUE,
+    `id`            INT             NOT NULL    AUTO_INCREMENT,
+    `name`          VARCHAR(255)    NOT NULL,
+    `phone`         VARCHAR(20)     NOT NULL,
+    `isLive`        BOOLEAN         NOT NULL    DEFAULT TRUE,
     PRIMARY KEY (`id`),
-    UNIQUE KEY `phone` (`phone`)
+    UNIQUE KEY `phone` (`phone`),
+    INDEX `idx_isLive` (`isLive`)
 );
-
 
 CREATE TABLE IF NOT EXISTS `routes` (
     `id`            INT             NOT NULL    AUTO_INCREMENT,
@@ -33,8 +33,10 @@ CREATE TABLE IF NOT EXISTS `assignments` (
     `routeId`       INT         NOT NULL,
     `assignedAt`    DATETIME    NOT NULL,
     PRIMARY KEY (`id`),
+    UNIQUE KEY `unique_driver_route` (`driverId`, `routeId`),
     KEY `driverId` (`driverId`),
     KEY `routeId` (`routeId`),
+    KEY `idx_assignedAt` (`assignedAt`),
     CONSTRAINT `assignments_fk_1` FOREIGN KEY (`driverId`) REFERENCES `drivers` (`id`) ON DELETE CASCADE,
     CONSTRAINT `assignments_fk_2` FOREIGN KEY (`routeId`) REFERENCES `routes` (`id`) ON DELETE CASCADE
 );
