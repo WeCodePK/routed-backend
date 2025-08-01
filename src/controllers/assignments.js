@@ -3,14 +3,50 @@ const router = express.Router();
 
 const { resp, query } = require('../functions'); 
 
+// router.get('/', async (req, res) => {
+//     try {
+//         return resp(res, 200, 'Successfully fetched all assignments', {
+//             assignments: await query(req, 'SELECT * FROM assignments JOIN ;')
+//         });
+//     }
+
+//     catch (error) {
+//         console.error('Error getting all assignments:', error);
+//         return resp(res, 500, 'Internal Server Error');
+//     }
+// });
+
 router.get('/', async (req, res) => {
     try {
-        return resp(res, 200, 'Successfully fetched all assignments', {
-            assignments: await query(req, 'SELECT * FROM assignments ORDER BY id DESC;')
-        });
-    }
+        const assignments = await query(req, `
+            SELECT 
+                a.id AS assignmentId,
+                r.id AS routeId, r.name AS routeName, r.points, r.description, r.totalDistance, r.createdAt,
+                d.id AS driverId, d.name AS driverName, d.phone
+            FROM assignments a
+            JOIN routes r ON a.routeId = r.id
+            JOIN drivers d ON a.driverId = d.id
+        `);
 
-    catch (error) {
+        const formattedAssignments = assignments.map(row => ({
+            id: row.assignmentId,
+            route: {
+                id: row.routeId,
+                name: row.routeName,
+                points: JSON.parse(row.points),
+                description: row.description,
+                totalDistance: row.totalDistance,
+                createdAt: row.createdAt
+            },
+            driver: {
+                id: row.driverId,
+                name: row.driverName,
+                phone: row.phone
+            }
+        }));
+
+        return resp(res, 200, 'Successfully fetched all assignments', { assignments: formattedAssignments });
+    } catch (error) {
         console.error('Error getting all assignments:', error);
         return resp(res, 500, 'Internal Server Error');
     }
