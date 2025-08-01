@@ -25,7 +25,6 @@ app.use((err, req, res, next) => {
     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
         return resp(res, 400, 'Invalid JSON payload')
     }
-    next();
 });
 
 const server = app.listen(3000, () => {
