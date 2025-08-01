@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const { resp, query } = require('../functions');
 
 router.get('/', async (req, res) => {
@@ -9,7 +8,6 @@ router.get('/', async (req, res) => {
             drivers: await query(req, 'SELECT * FROM drivers ORDER BY id DESC;')
         });
     }
-
     catch (error) {
         console.error('Error getting all drivers:', error);
         return resp(res, 500, 'Internal Server Error');
@@ -17,19 +15,21 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { name, phone } = req.body;
-
+    const { name, phone, isLive } = req.body;
     if (!name || !phone) return resp(res, 400, 'Missing or malformed input');
-
+    
     try {
+        const existing = await query(req, 'SELECT COUNT(*) AS count FROM drivers WHERE phone = ?', [phone]);
+        if (existing[0].count > 0) {
+            return resp(res, 400, 'Phone number already exists');
+        }
+
         const result = await query(req,
-            'INSERT INTO drivers (name, phone) VALUES (?, ?)',
-            [name, phone]
+            'INSERT INTO drivers (name, phone, isLive) VALUES (?, ?, ?)',
+            [name, phone, typeof isLive !== 'undefined' ? isLive : true]
         );
-
-        return resp(res, 200, "Driver created successfully", { driver: { id: result.insertId } });
+        return resp(res, 201, "Driver created successfully", { driver: { id: result.insertId } });
     }
-
     catch (error) {
         console.error('Error creating driver:', error);
         return resp(res, 500, 'Internal Server Error');
@@ -39,11 +39,9 @@ router.post('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const rows = await query(req, 'SELECT * FROM drivers WHERE id = ?', [req.params.id]);
-
         if (!rows.length) return resp(res, 404, 'No such driver');
         return resp(res, 200, 'Successfully fetched driver', { driver: rows[0] });
     }
-
     catch (error) {
         console.error('Error getting driver by ID:', error);
         return resp(res, 500, 'Internal Server Error');
@@ -51,20 +49,46 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    const { name, phone } = req.body;
+    const { name, phone, isLive } = req.body;
 
-    if (!name || !phone) return resp(res, 400, 'Missing or malformed input');
-
+    const fieldsToUpdate = [];
+    const params = [];
+    
+    if (name) {
+        fieldsToUpdate.push('name = ?');
+        params.push(name);
+    }
+    if (phone) {
+        try {
+            
+            const existing = await query(req, 'SELECT COUNT(*) AS count FROM drivers WHERE phone = ? AND id != ?', [phone, req.params.id]);
+            if (existing[0].count > 0) {
+                return resp(res, 400, 'Phone number already exists');
+            }
+        } catch (error) {
+            console.error('Error checking phone uniqueness:', error);
+            return resp(res, 500, 'Internal Server Error');
+        }
+        fieldsToUpdate.push('phone = ?');
+        params.push(phone);
+    }
+    if (typeof isLive !== 'undefined') {
+        fieldsToUpdate.push('isLive = ?');
+        params.push(isLive);
+    }
+    
+    if (fieldsToUpdate.length === 0) {
+        return resp(res, 400, 'No fields provided for update');
+    }
+    
     try {
-        const result = await query(req,
-            'UPDATE drivers SET name = ?, phone = ? WHERE id = ?',
-            [name, phone, req.params.id]
-        );
-
+        const sql = `UPDATE drivers SET ${fieldsToUpdate.join(', ')} WHERE id = ?`;
+        params.push(req.params.id);
+        
+        const result = await query(req, sql, params);
         if (!result.affectedRows) return resp(res, 404, 'No such driver');
         return resp(res, 200, 'Successfully updated driver');
     }
-
     catch (error) {
         console.error('Error updating driver:', error);
         return resp(res, 500, 'Internal Server Error');
@@ -73,10 +97,10 @@ router.put('/:id', async (req, res) => {
 
 router.delete('/:id', async (req, res) => {
     try {
-        await query(req, 'DELETE FROM drivers WHERE id = ?', [req.params.id]);
+        const result = await query(req, 'DELETE FROM drivers WHERE id = ?', [req.params.id]);
+        if (!result.affectedRows) return resp(res, 404, 'No such driver');
         return resp(res, 200, 'Successfully deleted driver');
     }
-
     catch (error) {
         console.error('Error deleting driver:', error);
         return resp(res, 500, 'Internal Server Error');
