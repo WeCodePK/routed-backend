@@ -14,10 +14,13 @@ router.post('/drivers/:driverId', async (req, res) => {
         if (!route.routeId || !route.assignedAt) {
             return resp(res, 400, 'Each route must have routeId and assignedAt');
         }
+
+        if (isNaN(Date.parse(route.assignedAt))) {
+            return resp(res, 400, `Invalid datetime format for route ID ${route.routeId}`);
+        }
     }
 
     try {
-        
         const driver = await query(req, 'SELECT id, isLive FROM drivers WHERE id = ?', [driverId]);
         if (driver.length === 0) {
             return resp(res, 404, 'Driver not found');
@@ -56,7 +59,6 @@ router.get('/drivers/:driverId', async (req, res) => {
     const { driverId } = req.params;
 
     try {
-        
         const driverCheck = await query(req, 'SELECT id FROM drivers WHERE id = ?', [driverId]);
         if (driverCheck.length === 0) {
             return resp(res, 404, 'Driver not found');
