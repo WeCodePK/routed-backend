@@ -1,0 +1,17 @@
+services:
+  routed-backend:
+    build: .
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    environment:
+      DB_USER: root
+      DB_HOST: mysql
+      DB_NAME: default
+
+  mysql:
+    image: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: default
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes

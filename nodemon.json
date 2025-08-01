@@ -1,0 +1,5 @@
+{
+  "watch": ["."],
+  "ext": "js,json",
+  "exec": "docker compose up --build"
+}

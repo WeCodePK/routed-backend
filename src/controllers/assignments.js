@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
+const { resp, query } = require('../functions'); 
+
 router.get('/', async (req, res) => {
     try {
         return resp(res, 200, 'Successfully fetched all assignments', {
@@ -10,6 +12,38 @@ router.get('/', async (req, res) => {
 
     catch (error) {
         console.error('Error getting all assignments:', error);
+        return resp(res, 500, 'Internal Server Error');
+    }
+});
+
+router.post('/', async (req, res) => {
+    const { routes, drivers } = req.body;
+
+    if (!Array.isArray(routes) || !Array.isArray(drivers)) {
+        return resp(res, 400, 'Missing or malformed input');
+    }
+
+    const assignments = [];
+    for (const routeId of routes) {
+        for (const driverId of drivers) {
+            assignments.push([routeId, driverId]);
+        }
+    }
+
+    if (assignments.length === 0) {
+        return resp(res, 400, 'No assignments to insert');
+    }
+
+    const placeholders = assignments.map(() => '(?, ?)').join(', ');
+    const sql = `INSERT INTO assignments (routeId, driverId) VALUES ${placeholders}`;
+
+    try {
+        await query(res, sql, assignments.flat());
+        return resp(res, 201, 'Successfully created assignments')
+    }
+
+    catch (error) {
+        console.error('Error creating assignments:', error);
         return resp(res, 500, 'Internal Server Error');
     }
 });
