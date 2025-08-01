@@ -33,7 +33,7 @@ router.get('/', async (req, res) => {
             route: {
                 id: row.routeId,
                 name: row.routeName,
-                points: JSON.parse(row.points),
+                points: row.points,
                 description: row.description,
                 totalDistance: row.totalDistance,
                 createdAt: row.createdAt
