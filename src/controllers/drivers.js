@@ -24,9 +24,11 @@ router.post('/', async (req, res) => {
             return resp(res, 400, 'Phone number already exists');
         }
 
+        const liveStatus = typeof isLive !== 'undefined' ? (isLive ? 1 : 0) : 1;
+
         const result = await query(req,
             'INSERT INTO drivers (name, phone, isLive) VALUES (?, ?, ?)',
-            [name, phone, typeof isLive !== 'undefined' ? isLive : true]
+            [name, phone, liveStatus]
         );
         return resp(res, 201, "Driver created successfully", { driver: { id: result.insertId } });
     }
@@ -60,7 +62,6 @@ router.put('/:id', async (req, res) => {
     }
     if (phone) {
         try {
-            
             const existing = await query(req, 'SELECT COUNT(*) AS count FROM drivers WHERE phone = ? AND id != ?', [phone, req.params.id]);
             if (existing[0].count > 0) {
                 return resp(res, 400, 'Phone number already exists');
@@ -73,8 +74,9 @@ router.put('/:id', async (req, res) => {
         params.push(phone);
     }
     if (typeof isLive !== 'undefined') {
+        
         fieldsToUpdate.push('isLive = ?');
-        params.push(isLive);
+        params.push(isLive ? 1 : 0);
     }
     
     if (fieldsToUpdate.length === 0) {
