@@ -141,7 +141,7 @@ router.post('/driver/login', async (req, res) => {
             if (rows.length === 0) throw new Error();
             const decoded = jwt.verify(rows[0].otpToken, process.env.JWT_SECRET);
 
-            console.log(decoded.otpCode, otpCode);
+            console.log({decoded, otpCode});
 
             if (decoded.otpCode !== otpCode) throw new Error();
 
