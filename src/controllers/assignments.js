@@ -22,7 +22,7 @@ router.get('/', async (req, res) => {
             SELECT 
                 a.id AS assignmentId,
                 r.id AS routeId, r.name AS routeName, r.points, r.description, r.totalDistance, r.createdAt,
-                d.id AS driverId, d.name AS driverName, d.phone
+                d.id AS driverId, d.name AS driverName, d.email
             FROM assignments a
             JOIN routes r ON a.routeId = r.id
             JOIN drivers d ON a.driverId = d.id
@@ -41,7 +41,7 @@ router.get('/', async (req, res) => {
             driver: {
                 id: row.driverId,
                 name: row.driverName,
-                phone: row.phone
+                email: row.email
             }
         }));
 
