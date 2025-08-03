@@ -23,4 +23,14 @@ async function sendMail({ to, subject, text, html }) {
   }
 }
 
-module.exports = { sendMail };
+function forgotPasswordTemplate({name, resetToken, expiryMinutes}) {
+  return {
+    subject: "[routed] Reset Your Password",
+    text: `Hi ${fields.name},\n\nWe received a request to reset your password.\nClick the link below to choose a new password:\n\nhttps://routed-web.wckd.pk/reset/${fields.resetToken}\n\nThis link will expire in ${fields.expiryMinutes} minutes.\nIf you didn't request a password reset, you can safely ignore this email.\n\nThanks,\nThe routed team.`
+  }
+}
+
+module.exports = {
+  sendMail,
+  forgotPasswordTemplate
+};

@@ -3,8 +3,9 @@ const router = express.Router();
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { sendMail } = require('../mailer');
 const { auth, resp, query, passwdReqs } = require('../functions');
+const { sendMail, forgotPasswordTemplate } = require('../mailer');
+
 
 router.post('/admin/login', async (req, res) => {
     const { email, password } = req.body;
@@ -36,7 +37,7 @@ router.post('/admin/forgot', async (req, res) => {
     if (!email) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const rows = await query(req, 'SELECT email FROM admins WHERE email = ?', [email]);
+        const rows = await query(req, 'SELECT name FROM admins WHERE email = ?', [email]);
 
         if (rows.length) {
 
@@ -45,26 +46,7 @@ router.post('/admin/forgot', async (req, res) => {
                 type: 'resetToken', 
             }, process.env.JWT_SECRET, { expiresIn: '15m' });
 
-            // TODO: send the actual email
-            console.log(resetToken);
-
-            sendMail({
-                to: email,
-                subject: "[routed] Reset Your Password",
-                text: `Hi ${rows[0].name},
-
-We received a request to reset your password.
-Click the link below to choose a new password:
-
-https://routed-web.wckd.pk/reset/${resetToken}
-
-This link will expire in 15 minutes.
-If you didn't request a password reset, you can safely ignore this email.
-
-Thanks,
-The routed team.
-`
-            });
+            await sendMail({ to: email, ...forgotPasswordTemplate({ name: rows[0].name, resetToken, expiry: "15 minutes" }) });
         }
 
         return resp(res, 200, 'If the user exists, a password reset email has been sent out');
