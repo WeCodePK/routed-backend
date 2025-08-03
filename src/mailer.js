@@ -35,7 +35,7 @@ module.exports = {
 
     driverLoginOtpTemplate({name, otpCode, expiry}) {
         return {
-            subject: `[routed] ${otp} is your OTP code for login`,
+            subject: `[routed] ${otpCode} is your OTP code for login`,
             text: `Hi ${name},\nYour One-Time Password for login is:\n\n${otpCode}\n\nThis code is valid for the next ${expiry}.\nPlease do not share this code with anyone. If you did not request this code, please ignore this email.\n\nThanks,\nThe routed team.`
         }
     }
