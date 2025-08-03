@@ -8,11 +8,12 @@ CREATE TABLE IF NOT EXISTS `admins` (
 );
 
 CREATE TABLE IF NOT EXISTS `drivers` (
-	`id`	INT				NOT NULL	AUTO_INCREMENT,
-	`name`	VARCHAR(255)	NOT NULL,
-	`phone`	VARCHAR(255)	NOT NULL,
+	`id`		INT				NOT NULL	AUTO_INCREMENT,
+	`name`		VARCHAR(255)	NOT NULL,
+	`email`		VARCHAR(255)	NOT NULL,
+	`otpToken`	VARCHAR(255),
 	PRIMARY KEY (`id`),
-	UNIQUE KEY `phone` (`phone`)
+	UNIQUE KEY `email` (`email`)
 );
 
 CREATE TABLE IF NOT EXISTS `routes` (
@@ -46,4 +47,8 @@ INSERT IGNORE INTO `admins` (`name`, `email`, `hash`) VALUES (
 	'Abdul Ahad',
 	'ahad19n@gmail.com',
 	'$2a$12$7a8u1dKuY5dfZmTmrfbQEOkTV3KrWlz.kCQ5bY1qpKzwfSKhdu.j.'
+);
+
+INSERT IGNORE INTO `drivers` (`name`, `email`) VALUES (
+	'Abdul Ahad Baba Rashid Chaudary', 'abdulahadshahid2005@gmail.com'
 );
