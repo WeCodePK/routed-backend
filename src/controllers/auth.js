@@ -116,7 +116,7 @@ router.post('/driver/otp', async (req, res) => {
             const otpCode = Math.floor(100000 + Math.random() * 900000).toString()
             const otpToken = jwt.sign({ otpCode }, process.env.JWT_SECRET, { expiresIn: '5m' });
 
-            await query(req, 'UPDATE DRIVERS SET otpToken = ? WHERE email = ?', [otpToken, email]);
+            await query(req, 'UPDATE drivers SET otpToken = ? WHERE email = ?', [otpToken, email]);
             await sendMail({ to: email, ...driverLoginOtpTemplate({ name: rows[0].name, otpCode, expiry: "5 minutes" }) });
         }
 
