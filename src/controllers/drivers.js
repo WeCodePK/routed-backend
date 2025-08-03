@@ -17,14 +17,14 @@ router.get('/', async (req, res) => {
 });
 
 router.post('/', async (req, res) => {
-    const { name, phone } = req.body;
+    const { name, email } = req.body;
 
-    if (!name || !phone) return resp(res, 400, 'Missing or malformed input');
+    if (!name || !email) return resp(res, 400, 'Missing or malformed input');
 
     try {
         const result = await query(req,
-            'INSERT INTO drivers (name, phone) VALUES (?, ?)',
-            [name, phone]
+            'INSERT INTO drivers (name, email) VALUES (?, ?)',
+            [name, email]
         );
 
         return resp(res, 200, "Driver created successfully", { driver: { id: result.insertId } });
@@ -51,14 +51,14 @@ router.get('/:id', async (req, res) => {
 });
 
 router.put('/:id', async (req, res) => {
-    const { name, phone } = req.body;
+    const { name, email } = req.body;
 
-    if (!name || !phone) return resp(res, 400, 'Missing or malformed input');
+    if (!name || !email) return resp(res, 400, 'Missing or malformed input');
 
     try {
         const result = await query(req,
-            'UPDATE drivers SET name = ?, phone = ? WHERE id = ?',
-            [name, phone, req.params.id]
+            'UPDATE drivers SET name = ?, email = ? WHERE id = ?',
+            [name, email, req.params.id]
         );
 
         if (!result.affectedRows) return resp(res, 404, 'No such driver');
