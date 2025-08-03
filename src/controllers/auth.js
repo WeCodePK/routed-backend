@@ -3,6 +3,7 @@ const router = express.Router();
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { sendMail } = require('../mailer');
 const { auth, resp, query, passwdReqs } = require('../functions');
 
 router.post('/admin/login', async (req, res) => {
@@ -46,6 +47,22 @@ router.post('/admin/forgot', async (req, res) => {
 
             // TODO: send the actual email
             console.log(resetToken);
+
+            sendMail(email, "[routed] Reset Your Password",
+`Hi ${rows[0].name},
+                
+We received a request to reset your password.
+Click the link below to choose a new password:
+
+https://routed-web.wckd.pk/reset/${resetToken}
+
+This link will expire in 15 minutes.
+If you didn’t request a password reset, you can safely ignore this email.
+
+Thanks,
+The routed team.
+`
+            );
         }
 
         return resp(res, 200, 'If the user exists, a password reset email has been sent out');
