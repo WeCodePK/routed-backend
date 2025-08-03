@@ -113,7 +113,7 @@ router.post('/driver/otp', async (req, res) => {
         const rows = await query(req, 'SELECT name FROM drivers WHERE email = ?', [email]);
 
         if (rows.length) {
-            const otpCode = Math.floor(100000 + Math.random() * 900000)
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
             const otpToken = jwt.sign({ otpCode }, process.env.JWT_SECRET, { expiresIn: '5m' });
 
             await query(req, 'UPDATE drivers SET otpToken = ? WHERE email = ?', [otpToken, email]);
@@ -140,8 +140,6 @@ router.post('/driver/login', async (req, res) => {
         try {
             if (rows.length === 0) throw new Error();
             const decoded = jwt.verify(rows[0].otpToken, process.env.JWT_SECRET);
-
-            console.log({decoded, otpCode});
 
             if (decoded.otpCode !== otpCode) throw new Error();
 
