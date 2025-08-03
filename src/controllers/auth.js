@@ -130,50 +130,30 @@ router.post('/driver/otp', async (req, res) => {
 });
 
 router.post('/driver/login', async (req, res) => {
-    const { otp, phone } = req.body;
+    const { email, otpCode } = req.body;
 
-    if (!otp || !phone) {
-        return res.status(400).json({ success: false, message: 'OTP and phone number are required.' });
-    }
+    if (!email || !otpCode) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const driverSql = 'SELECT id, contact FROM drivers WHERE contact = ?';
-        const driverRows = await query(req, driverSql, [phone]);
+        const rows = await query(req, 'SELECT otpToken FROM drivers WHERE email = ?', [email]);
 
-        if (driverRows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid phone number or OTP.' });
+        try {
+            if (rows.length === 0) throw new Error();
+            const decoded = jwt.verify(rows[0].otpToken, process.env.JWT_SECRET);
+
+            if (decoded.otpCode !== otpCode) throw new Error();
+
+            return resp(res, 200, "Login successful", {
+                jwt: jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+            });
+
+        } catch (error) {
+            return resp(res, 401, "Invalid email or otpCode");
         }
-        const driver = driverRows[0];
-
-        const otpSql = 'SELECT otp, expiresAt FROM driver_otps WHERE driverId = ? AND otp = ?';
-        const otpRows = await query(req, otpSql, [driver.id, otp]);
-
-        if (otpRows.length === 0) {
-            return res.status(401).json({ success: false, message: 'Invalid phone number or OTP.' });
-        }
-
-        const storedOtp = otpRows[0];
-        if (new Date() > new Date(storedOtp.expiresAt)) {
-            
-            const deleteOtpSql = 'DELETE FROM driver_otps WHERE driverId = ?';
-            await query(req, deleteOtpSql, [driver.id]);
-            return res.status(401).json({ success: false, message: 'OTP has expired.' });
-        }
-
-        const token = jwt.sign(
-            { id: driver.id, phone: driver.contact, role: 'driver' }, 
-            process.env.JWT_SECRET,
-            { expiresIn: '24h' } 
-        );
-
-        const deleteOtpSql = 'DELETE FROM driver_otps WHERE driverId = ?';
-        await query(req, deleteOtpSql, [driver.id]);
-
-        res.status(200).json({ success: true, message: 'Login successful', data: { jwt: token } });
 
     } catch (error) {
-        console.error('Error during driver login:', error);
-        res.status(500).json({ success: false, message: 'Server error during login', error: error.message });
+        console.error('[ERROR] during driver/login:', error);
+        return resp(res, 500, "Internal Server Error");
     }
 });
 
