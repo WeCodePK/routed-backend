@@ -4,7 +4,7 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { auth, resp, query, passwdReqs } = require('../functions');
-const { sendMail, forgotPasswordTemplate } = require('../mailer');
+const { sendMail, forgotPasswordTemplate, driverLoginOtpTemplate } = require('../mailer');
 
 
 router.post('/admin/login', async (req, res) => {
@@ -105,34 +105,27 @@ router.post('/admin/reset', auth({ type: 'resetToken' }), async (req, res) => {
 });
 
 router.post('/driver/otp', async (req, res) => {
-    const { phone } = req.body;
+    const { email } = req.body;
 
-    if (!phone) {
-        return res.status(400).json({ success: false, message: 'Phone number is required.' });
-    }
+    if (!email) return resp(res, 400, 'Missing or malformed input');
 
     try {
-        const sql = 'SELECT id FROM drivers WHERE contact = ?';
-        const rows = await query(req, sql, [phone]);
+        const rows = await query(req, 'SELECT name FROM drivers WHERE email = ?', [email]);
 
-        if (rows.length === 0) {
-            return res.status(200).json({ success: true, message: 'If the user exists, an OTP has been sent to their phone number.' });
+        if (rows.length) {
+            const otpCode = Math.floor(100000 + Math.random() * 900000).toString()
+            const otpToken = jwt.sign({ otpCode }, process.env.JWT_SECRET, { expiresIn: '5m' });
+
+            await query(req, 'UPDATE DRIVERS SET otpToken = ? WHERE email = ?', [otpToken, email]);
+            await sendMail({ to: email, ...driverLoginOtpTemplate({ name: rows[0].name, otpCode, expiry: "5 minutes" }) });
         }
 
-        const driver = rows[0];
-        const otp = Math.floor(100000 + Math.random() * 900000).toString(); 
-        const expiresAt = new Date(Date.now() + 5 * 60 * 1000); 
+        return resp(res, 200, 'If the driver exists, a otp email has been sent out');
+    }
 
-        const insertOtpSql = 'INSERT INTO driver_otps (driverId, otp, expiresAt) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE otp = ?, expiresAt = ?';
-        await query(req, insertOtpSql, [driver.id, otp, expiresAt, otp, expiresAt]);
-
-        console.log(`OTP for ${phone}: ${otp}`); 
-
-        res.status(200).json({ success: true, message: 'If the user exists, an OTP has been sent to their phone number.' });
-
-    } catch (error) {
+    catch (error) {
         console.error('Error generating driver OTP:', error);
-        res.status(500).json({ success: false, message: 'Server error during OTP generation', error: error.message });
+        return resp(res, 500, 'Internal Server Error');
     }
 });
 
