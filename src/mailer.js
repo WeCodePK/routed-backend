@@ -1,17 +1,14 @@
 const nodemailer = require('nodemailer');
+const [url, from] = process.env.SMTP_CONFIG.split('|');
 
-const transporter = nodemailer.createTransport(process.env.SMTP_URL, {
-  secure: process.env.SMTP_URL.startsWith('smtps://')
+const transporter = nodemailer.createTransport(url, {
+  secure: url.startsWith('smtps://')
 });
 
 async function sendMail({ to, subject, text, html }) {
-  const from = process.env.SMTP_FROM;
-
   try {
     return await transporter.sendMail({ from, to, subject, text, html });
-  }
-
-  catch (error) {
+  } catch (error) {
     console.error('[ERROR] Failed to send email:', error);
     return false;
   }
