@@ -35,7 +35,7 @@ module.exports = {
                     return module.exports.resp(res, 403, 'Invalid token type');
                 }
 
-                req.user = decoded;
+                req.token = decoded;
                 next();
             }
             
