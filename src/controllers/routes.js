@@ -4,19 +4,14 @@ const router = express.Router();
 const { resp, query } = require('../functions');
 
 router.get('/', async (req, res) => {
-    try {
-        if (req.user?.type == 'admin') {
-            return resp(res, 200, 'Successfully fetched all routes.', {
-                routes: await query(req, 'SELECT * FROM routes ORDER BY createdAt DESC')
-            });
-        }
+    const sql = `SELECT r.* FROM routes r JOIN assignments a ON r.id = a.routeId
+        JOIN drivers d ON a.driverId = d.id WHERE d.email = ? ORDER BY createdAt DESC`;
+ 
+    if (req.token.userType == 'admin') sql = 'SELECT * FROM routes ORDER BY createdAt DESC';
 
-        return resp(res, 200, 'Successfully fetched all routes.', {
-            routes: await query(req, 
-                `SELECT r.* FROM routes r
-                JOIN assignments a ON r.id = a.routeId
-                JOIN drivers d ON a.driverId = d.id WHERE d.email = ?;`,
-            [req.user.email])
+    try {
+        return resp(res, 200, 'Successfully fetched all routes', {
+            routes: await query(req, sql, [req.token.email])
         });
     }
 
