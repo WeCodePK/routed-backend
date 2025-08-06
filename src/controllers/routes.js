@@ -15,7 +15,7 @@ router.get('/', async (req, res) => {
             routes: await query(req, 
                 `SELECT r.* FROM routes r
                 JOIN assignments a ON r.id = a.routeId
-                JOIN drivers d ON a.driverId = d.id WHERE d.email = ?;`
+                JOIN drivers d ON a.driverId = d.id WHERE d.email = ?;`,
             [req.user.email])
         });
     }
