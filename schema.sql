@@ -50,5 +50,9 @@ INSERT IGNORE INTO `admins` (`name`, `email`, `hash`) VALUES (
 );
 
 INSERT IGNORE INTO `drivers` (`name`, `email`) VALUES (
-	'Abdul Ahad Baba Rashid Chaudary', 'abdulahadshahid2005@gmail.com'
+	'Abdul Ahad', 'abdulahadshahid2005@gmail.com'
+);
+
+INSERT IGNORE INTO `drivers` (`name`, `email`) VALUES (
+	'Syed Burhan Ali', 'syedburhanali2812@gmail.com'
 );
