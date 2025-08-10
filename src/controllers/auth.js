@@ -19,8 +19,8 @@ router.post('/admin/login', async (req, res) => {
         }
 
         return resp(res, 200, 'Login successful', {
-            jwt: jwt.sign({ 
-                email: rows[0].email 
+            jwt: jwt.sign({
+                email, type: 'admin'
             }, process.env.JWT_SECRET, { expiresIn: '1h' })
         });
     }
@@ -144,7 +144,9 @@ router.post('/driver/login', async (req, res) => {
             if (decoded.otpCode !== otpCode) throw new Error();
 
             return resp(res, 200, "Login successful", {
-                jwt: jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '1h' })
+                jwt: jwt.sign({
+                    email, type: 'driver'
+                }, process.env.JWT_SECRET, { expiresIn: '1h' })
             });
 
         } catch (error) {
