@@ -4,7 +4,7 @@ const router = express.Router();
 const { resp, query } = require('../functions');
 
 router.get('/', async (req, res) => {
-    const sql = `SELECT r.* FROM routes r JOIN assignments a ON r.id = a.routeId
+    let sql = `SELECT r.* FROM routes r JOIN assignments a ON r.id = a.routeId
         JOIN drivers d ON a.driverId = d.id WHERE d.email = ? ORDER BY createdAt DESC`;
  
     if (req.token.userType == 'admin') sql = 'SELECT * FROM routes ORDER BY createdAt DESC';

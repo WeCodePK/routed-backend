@@ -1,5 +1,5 @@
 {
+  "ext": "*",
   "watch": ["."],
-  "ext": "js,json",
-  "exec": "docker compose up --build"
+  "exec": "docker compose up --build --detach && docker compose logs --follow app"
 }

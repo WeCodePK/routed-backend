@@ -21,13 +21,13 @@ app.use('/api/v0/routes', auth(), require('./controllers/routes'));
 app.use('/api/v0/drivers', auth(), require('./controllers/drivers'));
 app.use('/api/v0/assignments', auth(), require('./controllers/assignments'));
 
-app.use((err, req, res, next) => {
-    if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
-        return resp(res, 400, 'Invalid JSON payload')
-    }
+// app.use((err, req, res, next) => {
+//     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+//         return resp(res, 400, 'Invalid JSON payload')
+//     }
 
-    res.status(500).json(err);
-});
+//     res.status(569).json(err);
+// });
 
 const server = app.listen(3000, () => {
     console.log(`[INFO] Server is running`);

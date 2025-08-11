@@ -20,7 +20,8 @@ router.post('/admin/login', async (req, res) => {
 
         return resp(res, 200, 'Login successful', {
             jwt: jwt.sign({
-                email, type: 'admin'
+                email,
+                userType: 'admin'
             }, process.env.JWT_SECRET, { expiresIn: '1h' })
         });
     }
@@ -145,7 +146,8 @@ router.post('/driver/login', async (req, res) => {
 
             return resp(res, 200, "Login successful", {
                 jwt: jwt.sign({
-                    email, type: 'driver'
+                    email,
+                    userType: 'driver'
                 }, process.env.JWT_SECRET, { expiresIn: '1h' })
             });
 

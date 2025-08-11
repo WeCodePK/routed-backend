@@ -1,4 +1,15 @@
 services:
+  traefik:
+    image: traefik
+    restart: unless-stopped
+    ports:
+      - 3000:3000
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:3000"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
   mysql:
     image: mysql
     restart: unless-stopped
@@ -11,13 +22,52 @@ services:
       timeout: 5s
       retries: 5
 
+  mailhog:
+    image: mailhog/mailhog
+    restart: unless-stopped
+    environment:
+      MH_UI_WEB_PATH: mailhog
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mailhog.entrypoints=web"
+      - "traefik.http.routers.mailhog.rule=PathPrefix(`/mailhog`)"
+      - "traefik.http.services.mailhog.loadbalancer.server.port=8025"
+
+  phpmyadmin:
+    image: phpmyadmin
+    environment:
+      PMA_USER: root
+      PMA_HOST: mysql
+      PMA_PASSWORD: root
+      PMA_ABSOLUTE_URI: http://localhost:3000/phpmyadmin/
+    labels:
+      - "traefik.enable=true"
+
+      # Router
+      - "traefik.http.routers.phpmyadmin.entrypoints=web"
+      - "traefik.http.routers.phpmyadmin.rule=PathPrefix(`/phpmyadmin`)"
+      - "traefik.http.routers.phpmyadmin.middlewares=phpmyadmin-redirect,strip-phpmyadmin"
+
+      # Redirect middleware (adds trailing slash)
+      - "traefik.http.middlewares.phpmyadmin-redirect.redirectregex.regex=^(/phpmyadmin)$"
+      - "traefik.http.middlewares.phpmyadmin-redirect.redirectregex.replacement=/phpmyadmin/"
+      - "traefik.http.middlewares.phpmyadmin-redirect.redirectregex.permanent=true"
+
+      # Strip the prefix before passing to phpMyAdmin
+      - "traefik.http.middlewares.strip-phpmyadmin.stripPrefix.prefixes=/phpmyadmin"
+
   app:
     build: .
     restart: unless-stopped
-    ports:
-      - 3000:3000
     depends_on:
       mysql:
         condition: service_healthy
     environment:
-      MYSQL_URL: mysql://root:root@mysql:3306/routed
+      JWT_SECRET: badbadbad
+      MYSQL_URL: mysql://root:root@mysql/routed
+      SMTP_CONFIG: smtp://mailhog:1025|routed@routed.dev
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app.entrypoints=web"
+      - "traefik.http.routers.app.rule=PathPrefix(`/api`)"
+      - "traefik.http.services.app.loadbalancer.server.port=3000"
